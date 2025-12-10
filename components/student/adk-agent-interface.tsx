@@ -123,6 +123,26 @@ export function ADKAgentInterface({ grade, subject, context = {} }: ADKAgentProp
     }
   }
 
+  // Helper function to safely render content
+  const renderContent = (content: any): React.ReactNode => {
+    if (!content) return null
+    if (typeof content === 'string') return content
+    if (typeof content === 'number' || typeof content === 'boolean') return String(content)
+    if (Array.isArray(content)) {
+      return (
+        <ul className="list-disc list-inside space-y-1">
+          {content.map((item, idx) => (
+            <li key={idx}>{renderContent(item)}</li>
+          ))}
+        </ul>
+      )
+    }
+    if (typeof content === 'object') {
+      return <pre className="text-xs bg-muted p-2 rounded overflow-x-auto">{JSON.stringify(content, null, 2)}</pre>
+    }
+    return null
+  }
+
   const renderResponse = () => {
     if (!response) return null
 
@@ -143,7 +163,7 @@ export function ADKAgentInterface({ grade, subject, context = {} }: ADKAgentProp
                 <CardTitle className="text-base">Introduction</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm">{result.introduction}</p>
+                <div className="text-sm">{renderContent(result.introduction)}</div>
               </CardContent>
             </Card>
           )}
@@ -154,7 +174,7 @@ export function ADKAgentInterface({ grade, subject, context = {} }: ADKAgentProp
                 <CardTitle className="text-base">Core Concepts</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-sm whitespace-pre-wrap">{result.concepts}</div>
+                <div className="text-sm whitespace-pre-wrap break-words overflow-wrap-anywhere">{renderContent(result.concepts)}</div>
               </CardContent>
             </Card>
           )}
@@ -165,7 +185,7 @@ export function ADKAgentInterface({ grade, subject, context = {} }: ADKAgentProp
                 <CardTitle className="text-base">Practice Activities</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-sm whitespace-pre-wrap">{result.activities}</div>
+                <div className="text-sm whitespace-pre-wrap break-words overflow-wrap-anywhere">{renderContent(result.activities)}</div>
               </CardContent>
             </Card>
           )}
@@ -176,7 +196,7 @@ export function ADKAgentInterface({ grade, subject, context = {} }: ADKAgentProp
                 <CardTitle className="text-base">Quick Quiz</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-sm whitespace-pre-wrap">{result.quiz}</div>
+                <div className="text-sm whitespace-pre-wrap break-words overflow-wrap-anywhere">{renderContent(result.quiz)}</div>
               </CardContent>
             </Card>
           )}
@@ -185,7 +205,7 @@ export function ADKAgentInterface({ grade, subject, context = {} }: ADKAgentProp
     }
 
     // Gap Analyzer Response
-    if (response.agentUsed === 'gap-analyzer' && result.gapsIdentified) {
+    if (response.agentUsed === 'gap-analyzer') {
       return (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -193,7 +213,18 @@ export function ADKAgentInterface({ grade, subject, context = {} }: ADKAgentProp
             <h3 className="font-semibold text-lg">Gap Analysis Complete</h3>
           </div>
 
-          {result.gapsIdentified && result.gapsIdentified.length > 0 && (
+          {result.analysis && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Detailed Analysis</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm whitespace-pre-wrap">{renderContent(result.analysis)}</div>
+              </CardContent>
+            </Card>
+          )}
+
+          {result.gapsIdentified && result.gapsIdentified.length > 0 && !result.analysis && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Gaps Identified</CardTitle>
@@ -210,8 +241,8 @@ export function ADKAgentInterface({ grade, subject, context = {} }: ADKAgentProp
                         {gap.severity}
                       </Badge>
                       <div className="flex-1">
-                        <p className="font-medium text-sm">{gap.topic}</p>
-                        <p className="text-xs text-muted-foreground">{gap.gap}</p>
+                        <p className="font-medium text-sm">{renderContent(gap.topic)}</p>
+                        <p className="text-xs text-muted-foreground">{renderContent(gap.gap)}</p>
                       </div>
                     </div>
                   ))}
@@ -220,17 +251,17 @@ export function ADKAgentInterface({ grade, subject, context = {} }: ADKAgentProp
             </Card>
           )}
 
-          {result.remediationPlan && (
+          {result.remediationPlan && !result.analysis && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Remediation Plan</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-sm space-y-2">
-                  {result.remediationPlan.steps?.map((step: string, idx: number) => (
+                  {result.remediationPlan.steps?.map((step: any, idx: number) => (
                     <div key={idx} className="flex items-start gap-2">
                       <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5" />
-                      <span>{step}</span>
+                      <span>{renderContent(step)}</span>
                     </div>
                   ))}
                 </div>
@@ -283,18 +314,18 @@ export function ADKAgentInterface({ grade, subject, context = {} }: ADKAgentProp
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-purple-600" />
-                <h3 className="font-semibold text-lg">Motivational Message {result.emoji}</h3>
+                <h3 className="font-semibold text-lg">Motivational Message {result.emoji || '✨'}</h3>
               </div>
-              <p className="text-sm whitespace-pre-wrap">{result.message}</p>
+              <div className="text-sm whitespace-pre-wrap">{renderContent(result.message)}</div>
               
               {result.actionItems && result.actionItems.length > 0 && (
                 <div>
                   <h4 className="font-medium mb-2">Action Items:</h4>
                   <ul className="space-y-1 text-sm">
-                    {result.actionItems.map((item: string, idx: number) => (
+                    {result.actionItems.map((item: any, idx: number) => (
                       <li key={idx} className="flex items-start gap-2">
                         <Zap className="w-4 h-4 text-yellow-600 mt-0.5" />
-                        <span>{item}</span>
+                        <span>{renderContent(item)}</span>
                       </li>
                     ))}
                   </ul>
@@ -318,12 +349,12 @@ export function ADKAgentInterface({ grade, subject, context = {} }: ADKAgentProp
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm whitespace-pre-wrap mb-4">{result.response}</p>
+              <div className="text-sm whitespace-pre-wrap mb-4">{renderContent(result.response)}</div>
               
               {result.practiceExercise && (
                 <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg mt-3">
                   <h4 className="font-medium text-sm mb-1">Practice Exercise:</h4>
-                  <p className="text-sm">{result.practiceExercise}</p>
+                  <div className="text-sm">{renderContent(result.practiceExercise)}</div>
                 </div>
               )}
             </CardContent>
@@ -336,10 +367,10 @@ export function ADKAgentInterface({ grade, subject, context = {} }: ADKAgentProp
               </CardHeader>
               <CardContent>
                 <ul className="space-y-1 text-sm">
-                  {result.followUpQuestions.map((q: string, idx: number) => (
+                  {result.followUpQuestions.map((q: any, idx: number) => (
                     <li key={idx} className="flex items-start gap-2">
                       <HelpCircle className="w-4 h-4 text-blue-600 mt-0.5" />
-                      <span>{q}</span>
+                      <span>{renderContent(q)}</span>
                     </li>
                   ))}
                 </ul>
@@ -350,11 +381,11 @@ export function ADKAgentInterface({ grade, subject, context = {} }: ADKAgentProp
       )
     }
 
-    // Generic Response
+    // Generic Response - safely render any response structure
     return (
       <Card>
         <CardContent className="pt-6">
-          <pre className="text-sm whitespace-pre-wrap">{JSON.stringify(result, null, 2)}</pre>
+          <div className="text-sm">{renderContent(result)}</div>
         </CardContent>
       </Card>
     )
@@ -464,15 +495,19 @@ export function ADKAgentInterface({ grade, subject, context = {} }: ADKAgentProp
       </Card>
 
       {response && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold">Response</h2>
-            <Badge>
-              Agent: {agents.find(a => a.id === response.agentUsed)?.name || response.agentUsed}
-            </Badge>
-          </div>
-          {renderResponse()}
-        </div>
+        <Card className="max-h-[600px] flex flex-col">
+          <CardHeader className="flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xl">Response</CardTitle>
+              <Badge>
+                Agent: {agents.find(a => a.id === response.agentUsed)?.name || response.agentUsed}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-y-auto">
+            {renderResponse()}
+          </CardContent>
+        </Card>
       )}
     </div>
   )

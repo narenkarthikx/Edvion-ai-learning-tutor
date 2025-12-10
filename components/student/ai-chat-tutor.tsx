@@ -100,17 +100,17 @@ What subject would you like to focus on today? And is there any specific topic y
   }
 
   return (
-    <Card className="h-[500px] flex flex-col">
-      <CardHeader className="pb-4">
+    <Card className="h-[600px] flex flex-col">
+      <CardHeader className="pb-4 flex-shrink-0">
         <CardTitle className="flex items-center gap-2">
           <Brain className="w-5 h-5 text-primary" />
           AI Study Assistant
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col space-y-4">
+      <CardContent className="flex-1 flex flex-col space-y-4 overflow-hidden">
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+        <div className="flex-1 overflow-y-auto space-y-3 pr-2 min-h-0">
           {messages.map((message) => (
             <div
               key={message.id}
@@ -135,7 +135,7 @@ What subject would you like to focus on today? And is there any specific topic y
                     </div>
                   )}
                   <div className="flex-1 overflow-hidden">
-                    <p className="text-sm whitespace-pre-wrap break-words">{message.text}</p>
+                    <p className="text-sm whitespace-pre-wrap break-words overflow-wrap-anywhere">{message.text}</p>
                     <span className="text-xs opacity-60 mt-1 block">
                       {message.timestamp.toLocaleTimeString()}
                     </span>
@@ -155,7 +155,7 @@ What subject would you like to focus on today? And is there any specific topic y
         </div>
 
         {/* Input */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0">
           <Input
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
@@ -174,7 +174,7 @@ What subject would you like to focus on today? And is there any specific topic y
         </div>
 
         {/* Quick Questions */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 flex-shrink-0">
           {[
             `Help with Grade ${studentGrade} Math`,
             "Explain this simply",

@@ -117,37 +117,69 @@ export class ContentGeneratorAgent {
     })
 
     const prompt = `
-You are a Tamil Nadu curriculum expert creating content for Class ${context.grade} students.
+You are a Tamil Nadu curriculum expert creating personalized learning content for Class ${context.grade} students.
 
 Student Request: ${request}
 Subject: ${context.subject || 'General'}
-Learning Style: ${context.learningStyle || 'visual'}
-Language Preference: ${context.language || 'English'}
-Current Understanding Level: ${context.difficulty || 'intermediate'}
+Grade: Class ${context.grade}
 
-Generate comprehensive learning content with:
-1. **Introduction** - Friendly, engaging opening
-2. **Core Concepts** - Clear explanations with examples
-3. **Visual Aids** - Descriptions for diagrams/illustrations
-4. **Practice Activities** - 3-5 interactive exercises
-5. **Real-World Applications** - Tamil Nadu context examples
-6. **Quick Quiz** - 3 questions to check understanding
-7. **Next Steps** - What to learn next
+Create an engaging, comprehensive lesson with the following sections. Write naturally and conversationally, as if teaching a student directly:
 
-Format as JSON with sections: introduction, concepts, visualAids, activities, applications, quiz, nextSteps
+**INTRODUCTION:**
+[Write a friendly, engaging 2-3 sentence introduction that hooks the student's interest]
+
+**CORE CONCEPTS:**
+[Explain the main concepts clearly with examples from daily life. Use simple language appropriate for Class ${context.grade}. Break down complex ideas into easy steps.]
+
+**PRACTICE ACTIVITIES:**
+[Provide 3-4 hands-on activities or practice problems the student can try right now]
+
+**REAL-WORLD APPLICATIONS:**
+[Show how this connects to real life in Tamil Nadu - use local examples like markets, festivals, farming, etc.]
+
+**QUICK QUIZ:**
+[Ask 2-3 quick questions to check understanding]
+
+**NEXT STEPS:**
+[Suggest what the student should learn next to build on this topic]
+
+Write everything clearly and naturally. Do NOT use JSON format. Write as plain text with clear section headers.
 `
 
     const result = await model.generateContent(prompt)
     const response = result.response.text()
     
-    let jsonText = response.trim()
-    if (jsonText.startsWith('```json')) {
-      jsonText = jsonText.slice(7, -3).trim()
-    } else if (jsonText.startsWith('```')) {
-      jsonText = jsonText.slice(3, -3).trim()
+    // Parse sections from the text response
+    const sections: any = {
+      introduction: '',
+      concepts: '',
+      activities: '',
+      applications: '',
+      quiz: '',
+      nextSteps: ''
     }
     
-    return JSON.parse(jsonText)
+    const sectionRegex = /\*\*([A-Z\s]+):\*\*\s*([\s\S]*?)(?=\*\*[A-Z\s]+:\*\*|$)/g
+    let match
+    
+    while ((match = sectionRegex.exec(response)) !== null) {
+      const sectionName = match[1].trim().toLowerCase().replace(/\s+/g, '')
+      const content = match[2].trim()
+      
+      if (sectionName.includes('introduction')) sections.introduction = content
+      else if (sectionName.includes('concept')) sections.concepts = content
+      else if (sectionName.includes('practice') || sectionName.includes('activit')) sections.activities = content
+      else if (sectionName.includes('real') || sectionName.includes('application')) sections.applications = content
+      else if (sectionName.includes('quiz')) sections.quiz = content
+      else if (sectionName.includes('next')) sections.nextSteps = content
+    }
+    
+    // If parsing failed, return the whole response as concepts
+    if (!sections.concepts && !sections.introduction) {
+      sections.concepts = response
+    }
+    
+    return sections
   }
 }
 
@@ -171,43 +203,51 @@ export class GapAnalyzerAgent {
     })
 
     const prompt = `
-Analyze learning gaps for a Class ${context.grade} Tamil Nadu student.
+You are analyzing learning gaps for a Class ${context.grade} Tamil Nadu student.
 
-Recent Performance Data:
-${JSON.stringify(context.recentScores || {}, null, 2)}
+Topic/Question: ${request}
+Current Grade: Class ${context.grade}
 
-Recent Mistakes:
-${JSON.stringify(context.recentMistakes || [], null, 2)}
+Analyze what gaps might exist and provide a helpful, encouraging response in this format:
 
-Current Topic: ${context.currentTopic || request}
+**GAPS IDENTIFIED:**
+List 2-3 specific areas where the student might be struggling. For each gap, mention:
+- What concept they're missing
+- Why it's important
+- How severe it is (critical/high/medium/low)
 
-Perform deep gap analysis:
-1. **Fundamental Gaps** - Missing basic concepts
-2. **Prerequisite Knowledge** - What they should have learned before
-3. **Current Topic Gaps** - Specific misunderstandings
-4. **Practice Gaps** - Areas needing more practice
-5. **Recommended Remediation** - Step-by-step recovery plan
+**ROOT CAUSE:**
+Explain in 1-2 sentences what the underlying issue might be.
 
-Return as JSON: { 
-  "gapsIdentified": [{ "gap": "", "severity": "critical|high|medium|low", "topic": "" }],
-  "rootCause": "",
-  "prerequisites": [],
-  "remediationPlan": { "steps": [], "estimatedTime": "", "resources": [] },
-  "confidenceScore": 0-100
-}
+**WHAT TO LEARN FIRST:**
+List the prerequisite topics they should understand before tackling this.
+
+**STEP-BY-STEP RECOVERY PLAN:**
+Give 4-5 clear, actionable steps to close these gaps, starting from basics.
+
+**ESTIMATED TIME:**
+How long will this take to master?
+
+Be encouraging and specific. Write naturally, don't use JSON format.
 `
 
     const result = await model.generateContent(prompt)
     const response = result.response.text()
     
-    let jsonText = response.trim()
-    if (jsonText.startsWith('```json')) {
-      jsonText = jsonText.slice(7, -3).trim()
-    } else if (jsonText.startsWith('```')) {
-      jsonText = jsonText.slice(3, -3).trim()
+    // Return structured but readable format
+    return {
+      gapsIdentified: [{
+        gap: 'Analysis complete',
+        severity: 'medium',
+        topic: request
+      }],
+      analysis: response,
+      remediationPlan: {
+        steps: ['See detailed plan above'],
+        estimatedTime: 'Check the response',
+        resources: []
+      }
     }
-    
-    return JSON.parse(jsonText)
   }
 
   async analyzeConceptDependencies(topic: string, grade: number) {
@@ -388,44 +428,32 @@ export class MotivatorAgent {
     })
 
     const prompt = `
-You are a caring mentor for a Class ${context.grade} student in Tamil Nadu.
+You are a warm, caring mentor for a Class ${context.grade} student in Tamil Nadu.
 
-Student Situation: ${request}
-Recent Performance: ${context.recentScores?.average || 'N/A'}%
-Mood Indicators: ${context.mood || 'neutral'}
-Learning Streak: ${context.streak || 0} days
+Student says: "${request}"
 
-Provide motivational response with:
-1. **Empathy** - Understand their feelings
-2. **Encouragement** - Specific praise for effort
-3. **Perspective** - Reframe challenges positively
-4. **Action Plan** - Small achievable next steps
-5. **Inspiration** - Relevant success story (Tamil context)
-6. **Affirmation** - Belief in their potential
+Write an encouraging, motivational message that:
+- Shows you understand how they feel
+- Celebrates their effort and progress
+- Gives them confidence to keep going
+- Suggests 2-3 small, achievable next steps
+- Uses simple, friendly language
 
-Tone: Warm, friendly, age-appropriate for Class ${context.grade}
-Length: 2-3 paragraphs
+Keep it warm, personal, and around 3-4 paragraphs. Be genuinely encouraging! 
 
-Return as JSON: {
-  "message": "",
-  "actionItems": [],
-  "inspirationStory": "",
-  "celebrationNote": "",
-  "emoji": ""
-}
+Add relevant emojis to make it friendly. Write naturally, don't use JSON format.
 `
 
     const result = await model.generateContent(prompt)
-    const response = result.response.text()
+    const responseText = result.response.text()
     
-    let jsonText = response.trim()
-    if (jsonText.startsWith('```json')) {
-      jsonText = jsonText.slice(7, -3).trim()
-    } else if (jsonText.startsWith('```')) {
-      jsonText = jsonText.slice(3, -3).trim()
+    return {
+      message: responseText,
+      actionItems: ['See the suggestions in the message above'],
+      inspirationStory: '',
+      celebrationNote: '',
+      emoji: '✨'
     }
-    
-    return JSON.parse(jsonText)
   }
 
   async generateDailyChallenge(grade: number, subject: string) {
@@ -504,54 +532,40 @@ export class TutorAgent {
       .join('\n')
 
     const prompt = `
-You are an expert tutor for Class ${context.grade} Tamil Nadu students.
+You are a friendly, expert tutor helping a Class ${context.grade} Tamil Nadu student.
 
-Previous Conversation:
+Previous conversation:
 ${conversationContext}
 
-Student's Current Question: ${request}
-Subject: ${context.subject || 'General'}
-Student's Level: ${context.difficulty || 'intermediate'}
+Student asks: "${request}"
 
-Respond as an excellent tutor would:
-1. **Acknowledge** - Show you understood the question
-2. **Check Prerequisites** - Ensure they have basic knowledge
-3. **Explain Simply** - Use analogies and examples
-4. **Visual Description** - Help them visualize concepts
-5. **Practice Opportunity** - Give them something to try
-6. **Socratic Questions** - Ask questions to deepen understanding
+Respond naturally as a helpful tutor would:
 
-Keep response:
-- Conversational and friendly
-- Grade-appropriate language
-- 3-4 paragraphs maximum
-- Include 1-2 follow-up questions
+**YOUR EXPLANATION:**
+[Explain the concept clearly in 2-3 paragraphs. Use simple language and everyday examples from Tamil Nadu. Make it friendly and encouraging.]
 
-Return as JSON: {
-  "response": "",
-  "keyPoints": [],
-  "practiceExercise": "",
-  "followUpQuestions": [],
-  "resources": []
-}
+**TRY THIS:**
+[Give 1-2 simple practice problems or activities they can try right now]
+
+**THINK ABOUT:**
+[Ask 1-2 questions to help them think deeper about this topic]
+
+Write naturally and conversationally. Be warm and encouraging. Don't use JSON format.
 `
 
     const result = await model.generateContent(prompt)
-    const response = result.response.text()
+    const responseText = result.response.text()
     
-    let jsonText = response.trim()
-    if (jsonText.startsWith('```json')) {
-      jsonText = jsonText.slice(7, -3).trim()
-    } else if (jsonText.startsWith('```')) {
-      jsonText = jsonText.slice(3, -3).trim()
+    // Add to history
+    this.conversationHistory.push({ role: 'tutor', content: responseText })
+    
+    return {
+      response: responseText,
+      keyPoints: [],
+      practiceExercise: 'See "Try This" section above',
+      followUpQuestions: [],
+      resources: []
     }
-    
-    const tutorResponse = JSON.parse(jsonText)
-    
-    // Add tutor response to history
-    this.conversationHistory.push({ role: 'tutor', content: tutorResponse.response })
-    
-    return tutorResponse
   }
 
   resetConversation() {

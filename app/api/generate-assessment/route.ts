@@ -33,6 +33,9 @@ export async function POST(request: NextRequest) {
     const prompt = `
 You are creating a smart adaptive assessment for Tamil Nadu Class ${grade} students studying ${subject}.
 
+LANGUAGE REQUIREMENT: ALL questions, options, explanations, and hints MUST be in ENGLISH ONLY. 
+Even for Tamil subject, use English to ask questions about Tamil language and literature.
+
 CRITICAL: Generate ONLY valid JSON in the exact format specified below. No markdown, no extra text.
 
 {
@@ -58,6 +61,7 @@ REQUIREMENTS FOR CLASS ${grade} ${subject.toUpperCase()}:
 5. Explanation must reference specific TNSCERT chapter/concept
 6. Questions must test understanding, not just memorization
 7. Use Tamil Nadu context in examples when possible
+8. For mathematical expressions: Use plain Unicode (like x², sin²θ, √) or simple text (like x^2, sqrt, sin^2), NOT LaTeX $...$ format
 
 ${grade === 10 ? 'Board Exam Focus: Follow Tamil Nadu board exam patterns and marking schemes' : 'Foundation Focus: Clear, simple language. Build confidence.'}
 
@@ -351,32 +355,32 @@ function getGrade10Questions(subject: string) {
     tamil: [
       {
         id: 1,
-        question: "திருக்குறள் எத்தனை அதிகாரங்களைக் கொண்டுள்ளது?",
+        question: "How many chapters (Adhikarams) does Thirukkural contain?",
         type: "multiple_choice",
         options: ["A) 130", "B) 133", "C) 108", "D) 120"],
         correct_answer: 1,
-        explanation: "திருக்குறள் 133 அதிகாரங்களைக் கொண்டுள்ளது. ஒவ்வொரு அதிகாரத்திலும் 10 குறள்கள் உள்ளன",
-        hint: "திருவள்ளுவர் அருளிய திருக்குறளின் அமைப்பை நினைவுகூருங்கள்",
+        explanation: "Thirukkural contains 133 chapters (Adhikarams). Each chapter has 10 couplets (Kurals)",
+        hint: "Remember the structure of Thirukkural written by Thiruvalluvar",
         difficulty_level: "easy"
       },
       {
         id: 2,
-        question: "எந்த இலக்கண நூல் 'தமிழ் மொழியின் முதல் இலக்கணம்' என அழைக்கப்படுகிறது?",
+        question: "Which grammar book is called the 'first grammar of Tamil language'?",
         type: "multiple_choice",
-        options: ["A) நன்னூல்", "B) தொல்காப்பியம்", "C) வீரசோழியம்", "D) இலக்கண விளக்கம்"],
+        options: ["A) Nannool", "B) Tolkappiyam", "C) Veerasoliyam", "D) Ilakkana Vilakkam"],
         correct_answer: 1,
-        explanation: "தொல்காப்பியம் தமிழ் மொழியின் முதல் இலக்கண நூலாகும். இது தொல்காப்பியர் என்ற முனிவரால் எழுதப்பட்டது",
-        hint: "இது மிகவும் பழமையான தமிழ் இலக்கண நூல்",
+        explanation: "Tolkappiyam is the first grammar book of Tamil language. It was written by sage Tolkappiyar",
+        hint: "This is the most ancient Tamil grammar text",
         difficulty_level: "medium"
       },
       {
         id: 3,
-        question: "'யாதும் ஊரே யாவரும் கேளிர்' என்ற பழமொழி எந்த நூலில் இருந்து வந்தது?",
+        question: "From which ancient Tamil work does the quote 'Yadhum Oore Yaavarum Kelir' (All lands are our own, all people are our kin) come from?",
         type: "multiple_choice",
-        options: ["A) திருக்குறள்", "B) புறநானூறு", "C) குறுந்தொகை", "D) நாலடியார்"],
+        options: ["A) Thirukkural", "B) Purananuru", "C) Kurunthogai", "D) Naladiyar"],
         correct_answer: 1,
-        explanation: "இந்த புகழ்பெற்ற வரிகள் புறநானூற்றில் இருந்து வந்தவை. இது உலகமயமாக்கலின் தமிழ் வெளிப்பாடு",
-        hint: "இது சங்க இலக்கியத்தின் ஒரு புகழ்பெற்ற தொகுப்பில் இருந்து வந்தது",
+        explanation: "These famous lines come from Purananuru, a collection of Sangam literature. It expresses the ancient Tamil concept of universal brotherhood",
+        hint: "This is from a famous collection of Sangam literature",
         difficulty_level: "hard"
       }
     ]

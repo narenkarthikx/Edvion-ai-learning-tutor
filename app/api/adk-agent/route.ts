@@ -9,10 +9,21 @@ export async function POST(request: NextRequest) {
       context 
     } = await request.json()
 
+    console.log('ADK Agent Request:', { query, agentType, context })
+
     if (!process.env.GEMINI_API_KEY) {
+      console.error('Missing GEMINI_API_KEY')
       return NextResponse.json(
         { error: 'API key not configured' },
         { status: 500 }
+      )
+    }
+
+    // Validate query
+    if (!query || query.trim() === '') {
+      return NextResponse.json(
+        { error: 'Query is required' },
+        { status: 400 }
       )
     }
 
@@ -25,16 +36,21 @@ export async function POST(request: NextRequest) {
     if (agentType) {
       const agent = (coordinator as any).agents.get(agentType)
       if (!agent) {
+        console.error(`Agent not found: ${agentType}`)
         return NextResponse.json(
-          { error: `Agent ${agentType} not found` },
+          { error: `Agent ${agentType} not found. Available agents: content-generator, gap-analyzer, assessor, motivator, tutor, general-assistant` },
           { status: 404 }
         )
       }
+      console.log(`Using agent: ${agentType}`)
       result = await agent.handle(query, context)
     } else {
       // Use intelligent routing
+      console.log('Using auto-routing')
       result = await coordinator.routeRequest(query, context)
     }
+
+    console.log('ADK Agent Result:', result)
 
     return NextResponse.json({ 
       success: true,
@@ -44,9 +60,13 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error: any) {
-    console.error('ADK Agent error:', error)
+    console.error('ADK Agent error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    })
     return NextResponse.json(
-      { error: error.message || 'Failed to process request' },
+      { error: error.message || 'Failed to process request. Please try again.' },
       { status: 500 }
     )
   }
