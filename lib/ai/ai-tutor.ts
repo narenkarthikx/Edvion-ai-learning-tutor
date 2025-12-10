@@ -8,7 +8,15 @@ class AITutor {
   }
 
   async generatePersonalizedLesson(studentProfile: any, topic: string) {
-    const model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
+    const model = this.genAI.getGenerativeModel({ 
+      model: "gemini-2.5-flash",
+      generationConfig: {
+        temperature: 0.8,
+        topK: 64,
+        topP: 0.95,
+        maxOutputTokens: 8192,
+      }
+    })
     
     const prompt = `
     Create a personalized lesson for:
@@ -33,7 +41,15 @@ class AITutor {
   }
 
   async provideTutoringHelp(question: string, studentContext: any) {
-    const model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
+    const model = this.genAI.getGenerativeModel({ 
+      model: "gemini-2.5-flash",
+      generationConfig: {
+        temperature: 0.9,
+        topK: 64,
+        topP: 0.95,
+        maxOutputTokens: 8192,
+      }
+    })
     
     const prompt = `
     Student (Grade ${studentContext.grade}) asks: "${question}"
@@ -53,7 +69,15 @@ class AITutor {
   }
 
   async generateAdaptiveAssessment(studentProfile: any, subject: string) {
-    const model = this.genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
+    const model = this.genAI.getGenerativeModel({ 
+      model: "gemini-2.5-flash",
+      generationConfig: {
+        temperature: 0.7,
+        topK: 64,
+        topP: 0.95,
+        maxOutputTokens: 8192,
+      }
+    })
     
     const prompt = `
     Generate an adaptive assessment for:

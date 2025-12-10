@@ -18,39 +18,45 @@ export async function POST(request: NextRequest) {
       model: "gemini-2.5-flash",
       generationConfig: {
         temperature: 0.8,
-        topK: 40,
+        topK: 64,
         topP: 0.95,
-        maxOutputTokens: 2048,
+        maxOutputTokens: 8192,
       },
     })
 
     const prompt = `
-Generate ${count} educational flashcards for Tamil Nadu Class ${grade} students.
+Create ${count} smart flashcards for Tamil Nadu Class ${grade} students.
 
 Subject: ${subject}
 Chapter ${chapter}: ${chapterTitle}
 
-Generate flashcards in the following JSON format:
+CRITICAL: Return ONLY valid JSON array. No markdown, no code blocks, no extra text.
+
 [
   {
-    "question": "Clear, concise question",
-    "answer": "Detailed answer with explanation",
-    "hint": "Optional helpful hint",
-    "difficulty": "easy|medium|hard",
-    "topic": "Specific topic within the chapter"
+    "question": "Clear, specific question testing one concept",
+    "answer": "Complete answer with explanation and examples",
+    "hint": "Helpful hint that guides thinking",
+    "difficulty": "easy",
+    "topic": "Specific sub-topic from the chapter"
   }
 ]
 
-Guidelines:
-1. Questions should be clear and test understanding, not just memorization
-2. Include a mix of difficulty levels (40% easy, 40% medium, 20% hard)
-3. Answers should be educational and explain concepts
-4. Hints should guide thinking without giving away the answer
-5. Follow Tamil Nadu board exam patterns
-6. Use simple language appropriate for Class ${grade}
-7. Include practical examples where relevant
+FLASHCARD REQUIREMENTS:
+1. Questions must be clear and test ONE concept at a time
+2. Cover key concepts from "${chapterTitle}" chapter
+3. Mix difficulties: ${Math.floor(count * 0.4)} easy, ${Math.floor(count * 0.4)} medium, ${Math.ceil(count * 0.2)} hard
+4. Answers should explain the concept, not just state facts
+5. Hints should guide thinking without revealing the answer
+6. Use Tamil Nadu context and TNSCERT curriculum
+7. Questions should prompt recall and understanding, not just yes/no
 
-Return ONLY valid JSON array, no additional text.
+DIFFICULTY LEVELS:
+- easy: Direct recall of key facts/definitions from ${chapterTitle}
+- medium: Application of concepts from ${chapterTitle} to simple problems
+- hard: Analysis, synthesis, or connecting multiple concepts from ${chapterTitle}
+
+Return ONLY the JSON array. Start directly with [
 `
 
     const result = await model.generateContent(prompt)
@@ -58,10 +64,15 @@ Return ONLY valid JSON array, no additional text.
 
     // Extract JSON from response (handle markdown code blocks)
     let jsonText = response.trim()
-    if (jsonText.startsWith('```json')) {
-      jsonText = jsonText.slice(7, -3).trim()
-    } else if (jsonText.startsWith('```')) {
-      jsonText = jsonText.slice(3, -3).trim()
+    const jsonCodeBlockRegex = /^```json\s*([\s\S]*?)\s*```$/
+    const codeBlockRegex = /^```\s*([\s\S]*?)\s*```$/
+    
+    if (jsonCodeBlockRegex.test(jsonText)) {
+      const match = jsonText.match(jsonCodeBlockRegex)
+      jsonText = match ? match[1].trim() : jsonText
+    } else if (codeBlockRegex.test(jsonText)) {
+      const match = jsonText.match(codeBlockRegex)
+      jsonText = match ? match[1].trim() : jsonText
     }
 
     const flashcards = JSON.parse(jsonText)

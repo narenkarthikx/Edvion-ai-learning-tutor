@@ -63,6 +63,8 @@ export class AgentCoordinator {
       model: "gemini-2.5-flash",
       generationConfig: {
         temperature: 0.3,
+        topK: 40,
+        topP: 0.9,
       }
     })
 
@@ -108,7 +110,9 @@ export class ContentGeneratorAgent {
       model: "gemini-2.5-flash",
       generationConfig: {
         temperature: 0.8,
+        topK: 64,
         topP: 0.95,
+        maxOutputTokens: 8192,
       }
     })
 
@@ -160,6 +164,9 @@ export class GapAnalyzerAgent {
       model: "gemini-2.5-flash",
       generationConfig: {
         temperature: 0.4,
+        topK: 40,
+        topP: 0.9,
+        maxOutputTokens: 8192,
       }
     })
 
@@ -205,7 +212,13 @@ Return as JSON: {
 
   async analyzeConceptDependencies(topic: string, grade: number) {
     const model = this.genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash"
+      model: "gemini-2.5-flash",
+      generationConfig: {
+        temperature: 0.5,
+        topK: 40,
+        topP: 0.9,
+        maxOutputTokens: 8192,
+      }
     })
 
     const prompt = `
@@ -252,6 +265,9 @@ export class AssessmentAgent {
       model: "gemini-2.5-flash",
       generationConfig: {
         temperature: 0.6,
+        topK: 64,
+        topP: 0.95,
+        maxOutputTokens: 8192,
       }
     })
 
@@ -306,6 +322,9 @@ Return as JSON with questions array and metadata.
       model: "gemini-2.5-flash",
       generationConfig: {
         temperature: 0.3,
+        topK: 40,
+        topP: 0.9,
+        maxOutputTokens: 4096,
       }
     })
 
@@ -361,7 +380,10 @@ export class MotivatorAgent {
     const model = this.genAI.getGenerativeModel({ 
       model: "gemini-2.5-flash",
       generationConfig: {
-        temperature: 0.9, // Higher creativity for motivation
+        temperature: 0.9,
+        topK: 64,
+        topP: 0.95,
+        maxOutputTokens: 4096,
       }
     })
 
@@ -408,7 +430,13 @@ Return as JSON: {
 
   async generateDailyChallenge(grade: number, subject: string) {
     const model = this.genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash"
+      model: "gemini-2.5-flash",
+      generationConfig: {
+        temperature: 0.8,
+        topK: 64,
+        topP: 0.95,
+        maxOutputTokens: 4096,
+      }
     })
 
     const prompt = `
@@ -464,6 +492,9 @@ export class TutorAgent {
       model: "gemini-2.5-flash",
       generationConfig: {
         temperature: 0.7,
+        topK: 64,
+        topP: 0.95,
+        maxOutputTokens: 8192,
       }
     })
 
@@ -551,7 +582,13 @@ export class GeneralAssistantAgent {
 
   async handle(request: string, context: any) {
     const model = this.genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash"
+      model: "gemini-2.5-flash",
+      generationConfig: {
+        temperature: 0.7,
+        topK: 64,
+        topP: 0.95,
+        maxOutputTokens: 4096,
+      }
     })
 
     const prompt = `

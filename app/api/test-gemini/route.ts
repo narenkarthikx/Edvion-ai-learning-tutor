@@ -16,7 +16,15 @@ export async function GET() {
       })
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.5-flash",
+      generationConfig: {
+        temperature: 0.9,
+        topK: 64,
+        topP: 0.95,
+        maxOutputTokens: 8192,
+      },
+    })
 
     const prompt = "Say hello in one sentence."
 

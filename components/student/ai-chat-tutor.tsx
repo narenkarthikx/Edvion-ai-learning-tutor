@@ -134,8 +134,8 @@ What subject would you like to focus on today? And is there any specific topic y
                       <MessageSquare className="w-3 h-3" />
                     </div>
                   )}
-                  <div className="flex-1">
-                    <p className="text-sm whitespace-pre-wrap">{message.text}</p>
+                  <div className="flex-1 overflow-hidden">
+                    <p className="text-sm whitespace-pre-wrap break-words">{message.text}</p>
                     <span className="text-xs opacity-60 mt-1 block">
                       {message.timestamp.toLocaleTimeString()}
                     </span>

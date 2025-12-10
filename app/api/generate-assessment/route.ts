@@ -23,43 +23,46 @@ export async function POST(request: NextRequest) {
     const model = genAI.getGenerativeModel({ 
       model: "gemini-2.5-flash",
       generationConfig: {
-        temperature: 0.7,
-        topK: 40,
+        temperature: 0.8,
+        topK: 64,
         topP: 0.95,
-        maxOutputTokens: 2048,
+        maxOutputTokens: 8192,
       },
     })
 
     const prompt = `
-Generate exactly 3 Tamil Nadu Class ${grade} ${grade === 10 ? 'board exam' : 'foundation level'} style questions for ${subject}.
+You are creating a smart adaptive assessment for Tamil Nadu Class ${grade} students studying ${subject}.
 
-STRICT JSON FORMAT REQUIRED:
+CRITICAL: Generate ONLY valid JSON in the exact format specified below. No markdown, no extra text.
+
 {
   "questions": [
     {
       "id": 1,
-      "question": "Question text here",
+      "question": "Clear question text based on TNSCERT syllabus",
       "type": "multiple_choice",
-      "options": ["A) option1", "B) option2", "C) option3", "D) option4"],
+      "options": ["A) First option", "B) Second option", "C) Third option", "D) Fourth option"],
       "correct_answer": 0,
-      "explanation": "Why this answer is correct",
-      "hint": "Helpful hint for students",
+      "explanation": "Detailed explanation why this is correct with concept reference",
+      "hint": "Helpful hint without giving answer away",
       "difficulty_level": "easy"
     }
   ]
 }
 
-Requirements:
-- MUST return valid JSON only, no extra text
-- Questions from TNSCERT Class ${grade} syllabus
-- ${grade === 10 ? 'Include one easy, one medium, one hard question suitable for board exam preparation' : 'Include foundation-level questions appropriate for Class 7 students'}
-- Provide 4 multiple choice options (A, B, C, D)
-- correct_answer as number (0, 1, 2, or 3)
-- Clear explanations with chapter references for Class ${grade}
-- Helpful hints for Tamil Nadu Class ${grade} students
+REQUIREMENTS FOR CLASS ${grade} ${subject.toUpperCase()}:
+1. Generate exactly 3 questions from TNSCERT Class ${grade} ${subject} curriculum
+2. ${grade === 10 ? 'Mix difficulty: 1 easy (basic concept), 1 medium (application), 1 hard (analysis/synthesis) - Board exam style' : 'Foundation level questions: 2 easy, 1 medium - Build strong basics'}
+3. Each question must have exactly 4 options labeled A), B), C), D)
+4. correct_answer must be a number: 0 for A, 1 for B, 2 for C, 3 for D
+5. Explanation must reference specific TNSCERT chapter/concept
+6. Questions must test understanding, not just memorization
+7. Use Tamil Nadu context in examples when possible
 
-Subject: ${subject}, Grade: ${grade}
-Generate ONLY the JSON response:`
+${grade === 10 ? 'Board Exam Focus: Follow Tamil Nadu board exam patterns and marking schemes' : 'Foundation Focus: Clear, simple language. Build confidence.'}
+
+Return ONLY the JSON object. No code blocks, no markdown, no extra text.
+`
 
     const result = await model.generateContent(prompt)
     const responseText = result.response.text()
@@ -70,10 +73,15 @@ Generate ONLY the JSON response:`
     let jsonText = responseText.trim()
     
     // Remove code blocks if present
-    if (jsonText.startsWith('```json')) {
-      jsonText = jsonText.replace(/```json\s*/g, '').replace(/\s*```/g, '')
-    } else if (jsonText.startsWith('```')) {
-      jsonText = jsonText.replace(/```\s*/g, '').replace(/\s*```/g, '')
+    const jsonCodeBlockRegex = /^```json\s*([\s\S]*?)\s*```$/
+    const codeBlockRegex = /^```\s*([\s\S]*?)\s*```$/
+    
+    if (jsonCodeBlockRegex.test(jsonText)) {
+      const match = jsonText.match(jsonCodeBlockRegex)
+      jsonText = match ? match[1].trim() : jsonText
+    } else if (codeBlockRegex.test(jsonText)) {
+      const match = jsonText.match(codeBlockRegex)
+      jsonText = match ? match[1].trim() : jsonText
     }
     
     // Extract JSON object
